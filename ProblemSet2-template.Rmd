@@ -1,0 +1,134 @@
+---
+title: "Title of Your Report"
+author: "Names of your Group Members"
+date: "Due Date"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r, cache=TRUE}
+# library
+library(tidyverse)
+library(here)
+```
+
+## Title of your Report
+
+# Name(s) of Author(s) 
+# Date
+
+## Abstract
+
+Here is where you give a brief (one paragraph overview of your entire paper). This should include some background/introduction, some methodology, results and conclusions.
+
+## Introduction
+
+Here is where you should give insight into the setting and introduce the goal of the analysis. Here you can introduce ideas and basic concepts regarding the study setting and the potential model. Again, this is the introduction, so you should be explaining the importance of the work that is ahead and hopefully build some suspense for the reader. You can also highlight what will be included in the subsequent sections.
+
+## Data
+
+Introduce the data, explain why it was selected. Make sure to comment on important features and highlight any potential drawbacks to the data.
+
+```{r, cache=TRUE}
+# load data
+GSS <- read_csv(here("gss.csv")) %>%
+  subset(select = c(feelings_life, marital_status, own_rent, religion_has_affiliation, income_respondent))
+
+GSS <- GSS %>%
+  na.omit()
+```
+I deceided to remove the NAs in the data
+
+## Model
+
+Introduce the selected model here. It is expected that you will use some mathematical notation here. If you do please ensure that all notation is explained. You may also want to discuss any special (hypothetical) cases of your model here, as well as any caveats. 
+
+$$Feelings\_life = a + b_1*marital\_status+ b2 *own\_rent + b3*religion\_has\_affiliation +b4*income\_respondent$$
+
+## Results
+```{r, cache=TRUE}
+# Descriptive stas
+# Feeling life
+GSS %>%
+  ggplot(aes(feelings_life)) +
+  geom_bar(aes(y = (..count..)/sum(..count..))) + 
+  scale_y_continuous(labels=scales::percent) +
+  labs(title= "Figure 1: Distribution of Feeling_life",
+       y = "relative frequencies") +
+  theme(plot.title = element_text(hjust=0.5))
+
+
+
+```
+
+
+```{r}
+# Do the regression
+# First, create dummy variables for the regression
+regression_data <- GSS %>%
+  mutate(# Dummies for Marital Status
+         # Single, never married as the base model
+         is_married = (marital_status == "Married"),
+         is_living_common_law = (marital_status == "Living common-law"),
+         is_divorced = (marital_status == "Divorced"),
+         is_separated = (marital_status == "Separated"),
+         is_widowed = (marital_status == "Widowed"),
+         # Dummies for Own Rent
+         # Rented, even if no cash rent is paid as the base model
+         is_owned = (own_rent == "Owned by you or a member of this household, even if it i..."),
+         is_rented_dk = (own_rent == "Don't know"),
+         # Dummies for religion_has_affiliation
+         # No religious affiliation as the base model
+         is_religion = (religion_has_affiliation == "Has religious affiliation"),
+         is_religion_dk = (religion_has_affiliation == "Don't know"),
+         # Dummies for income_respondent
+         # Do not have a base model
+         is_0_25 = (income_respondent == "Less than $25,000"),
+         is_25_49 = (income_respondent == "$25,000 to $49,999"),
+         is_50_74 = (income_respondent == "$50,000 to $74,999"),
+         is_75_99 = (income_respondent == "$75,000 to $99,999"),
+         is_100_124 = (income_respondent == "$100,000 to $ 124,999"),
+         is_125 = (income_respondent == "$125,000 and more")) %>%
+  
+  subset(select = -c(marital_status, own_rent, religion_has_affiliation, income_respondent))
+
+# DO THE REGRESSION
+Model_result <- regression_data %>%
+  lm(feelings_life ~ ., data = .)
+
+summary(Model_result)
+
+Model_result2 <- regression_data %>%
+   # 25-49 as the base model
+  subset(select = - is_25_49) %>%
+  lm(feelings_life ~ ., data = .)
+
+summary(Model_result2)
+```
+
+
+Here you will include all results. This includes descriptive statistics, graphs, figures, tables, and model results. Please ensure that everything is well formatted and in a report style. You must also provide an explanation of the results in this section. You can overflow to an Appendix if needed. 
+
+Please ensure that everything is well labelled. So if you have multiple histograms and plots, calling them Figure 1, 2, 3, etc. and referencing them as Figure 1, Figure 2, etc. in your report will be expected. The reader should not get lost in a sea of information. Make sure to have the results be clean, well formatted and digestible.
+
+## Discussion
+
+Here you will discuss conclusions drawn from the results and comment on how it relates to the original goal of the study (which was specified in the Introduction).
+
+# Weaknesses
+
+Here we discuss weaknesses of the study, data, analysis, etc. You can also discuss areas for improvement.
+
+# Next Steps
+
+Here you discuss subsequent work to be done after this report. This can include next steps in terms of statistical analysis (perhaps there is a more efficient algorithm available, or perhaps there is a caveat in the data that would allow for some new technique). Future steps should also be specified in terms of the study setting (eg. including a follow-up survey on something, or a subsequent study that would complement the conclusions of your report).
+
+
+## References
+
+
+
