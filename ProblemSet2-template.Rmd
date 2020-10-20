@@ -1,12 +1,14 @@
 ---
-title: "Title of Your Report"
-author: "Names of your Group Members"
-date: "Due Date"
-output: pdf_document
+title: "Problem set 2"
+author: "Juntong Lin"
+date: "2020/10/19"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
@@ -16,42 +18,39 @@ library(tidyverse)
 library(here)
 ```
 
-## Title of your Report
-
-# Name(s) of Author(s) 
-# Date
+# Juntong Lin
+# 2020/10/19
 
 ## Abstract
 
-Here is where you give a brief (one paragraph overview of your entire paper). This should include some background/introduction, some methodology, results and conclusions.
+This study is mainly to explore the relationship between people's feelings of life and their individual income, and look out at which level of income will have a significant impact. I also choose the marital status, house owning or renting, and religion as the other affecting variables on life feelings. A linear model is chosen for this study. As a result, I find out individual income is a signifacnt factor, however, the increase of feelings life is not that obvious in the first four levels of income. 
 
 ## Introduction
 
-Here is where you should give insight into the setting and introduce the goal of the analysis. Here you can introduce ideas and basic concepts regarding the study setting and the potential model. Again, this is the introduction, so you should be explaining the importance of the work that is ahead and hopefully build some suspense for the reader. You can also highlight what will be included in the subsequent sections.
+In recent years, people are having more and more preasures, and it's hard to have a satisfied life. After looking at this dataset, I'm interested in the feelings of life of people, and would like to find out some variables would have significant relation with it. Therefore, in this study, I choose several varibles in common views that will affect the feeligs of life. Since there are different levels in each variable, when coding, I would set a base level for each of them. Also, as my main focus is on individual income, I would study all the levels of income and find out their relationship and significance. After that, I would summary each level of income and code the regression of them. The result of relationship of each variable may be easy to guess, but different levels within each variables would have different significance.
 
 ## Data
 
-Introduce the data, explain why it was selected. Make sure to comment on important features and highlight any potential drawbacks to the data.
-
 ```{r, cache=TRUE}
-# load data
+# Load Data
 GSS <- read_csv(here("gss.csv")) %>%
   subset(select = c(feelings_life, marital_status, own_rent, religion_has_affiliation, income_respondent))
 
+# omit nas
 GSS <- GSS %>%
   na.omit()
 ```
-I deceided to remove the NAs in the data
+feelings_life, marital_status, own_rent, religion_has_affiliation, and income_respondent are the dat I decided to choose. I chose them because they are some common views of happiness of life. Also, I decided to remove the NAs in the data. There were 471 out of 20602 datas contains NA, so removing them does not change the sample by much.
 
 ## Model
 
-Introduce the selected model here. It is expected that you will use some mathematical notation here. If you do please ensure that all notation is explained. You may also want to discuss any special (hypothetical) cases of your model here, as well as any caveats. 
+I choose the linear model to study my hypothesis. I choose this model because it is the most clear and simlified, since the variables are all substring and have different levels. This will make it easier to set a base model and study each level's significance.
 
 $$Feelings\_life = a + b_1*marital\_status+ b2 *own\_rent + b3*religion\_has\_affiliation +b4*income\_respondent$$
 
 ## Results
 ```{r, cache=TRUE}
-# Descriptive stas
+# Descriptive Stats
 # Feeling life
 GSS %>%
   ggplot(aes(feelings_life)) +
@@ -61,12 +60,46 @@ GSS %>%
        y = "relative frequencies") +
   theme(plot.title = element_text(hjust=0.5))
 
+# Marital Status
+GSS %>%
+  ggplot(aes(marital_status)) +
+  geom_bar(aes(y = (..count..)/sum(..count..))) + 
+  scale_y_continuous(labels=scales::percent) +
+  labs(title= "Table1: Distribution of Marital_status",
+       y = "relative frequencies") +
+  theme(plot.title = element_text(hjust=0.5))
 
+# Own_rent
+GSS %>%
+  ggplot(aes(own_rent)) +
+  geom_bar(aes(y = (..count..)/sum(..count..))) + 
+  scale_y_continuous(labels=scales::percent) +
+  labs(title= "Table1: Distribution of own_rent",
+       y = "relative frequencies") +
+  theme(plot.title = element_text(hjust=0.5))
+
+# Religion
+GSS %>%
+  ggplot(aes(religion_has_affiliation)) +
+  geom_bar(aes(y = (..count..)/sum(..count..))) + 
+  scale_y_continuous(labels=scales::percent) +
+  labs(title= "Table1: Distribution of religion_has_affiliation",
+       y = "relative frequencies") +
+  theme(plot.title = element_text(hjust=0.5))
+
+# Income_respondent
+GSS %>%
+  ggplot(aes(income_respondent)) +
+  geom_bar(aes(y = (..count..)/sum(..count..))) + 
+  scale_y_continuous(labels=scales::percent) +
+  labs(title= "Table 2: Distribution of income_respondent",
+       y = "relative frequencies") +
+  theme(plot.title = element_text(hjust=0.5))
 
 ```
 
 
-```{r}
+```{r, cache=TRUE}
 # Do the regression
 # First, create dummy variables for the regression
 regression_data <- GSS %>%
@@ -86,49 +119,104 @@ regression_data <- GSS %>%
          is_religion = (religion_has_affiliation == "Has religious affiliation"),
          is_religion_dk = (religion_has_affiliation == "Don't know"),
          # Dummies for income_respondent
-         # Do not have a base model
+         # Do not have a base model yet
          is_0_25 = (income_respondent == "Less than $25,000"),
          is_25_49 = (income_respondent == "$25,000 to $49,999"),
          is_50_74 = (income_respondent == "$50,000 to $74,999"),
          is_75_99 = (income_respondent == "$75,000 to $99,999"),
          is_100_124 = (income_respondent == "$100,000 to $ 124,999"),
          is_125 = (income_respondent == "$125,000 and more")) %>%
-  
   subset(select = -c(marital_status, own_rent, religion_has_affiliation, income_respondent))
-
+  
 # DO THE REGRESSION
-Model_result <- regression_data %>%
+Model_result1 <- regression_data %>%
+   # Less than $25,000 as the base model
+  subset(select = - is_0_25) %>%
   lm(feelings_life ~ ., data = .)
 
-summary(Model_result)
+summary(Model_result1)
 
+# Plot the barplot to show the difference of Feelings_life from Less than $25,000
+Model_result1$coefficients %>%
+  .[11:15] %>%
+  t() %>%
+  as_tibble() %>%
+  pivot_longer(cols = c(1:5), names_to = "Group", values_to = "Diff") %>%
+  # fix the the group order
+  mutate(Group = GSS$income_respondent %>%
+           unique() %>%
+           .[c(1,3,5,6,4)],
+         Group = factor(GSS$income_respondent %>%
+                          unique() %>%
+                          .[c(1,3,5,6,4)],
+                        levels = GSS$income_respondent %>%
+                          unique() %>%
+                          .[c(1,3,5,6,4)])) %>%
+  ggplot(aes(Group, Diff)) +
+  geom_col() +
+  labs(title= "Figure 1: The Regression Coefficients with Less than $25,000 as Base",
+       x = "Income",
+       y = "Feelings_life Difference from Less than $25,000") +
+  theme(plot.title = element_text(hjust=0.5))
+
+# DO THE REGRESSION
+# 25-49 as the base model
 Model_result2 <- regression_data %>%
-   # 25-49 as the base model
   subset(select = - is_25_49) %>%
   lm(feelings_life ~ ., data = .)
 
 summary(Model_result2)
+
+# 50-74 as the base model
+Model_result3 <- regression_data %>%
+  subset(select = - is_50_74) %>%
+  lm(feelings_life ~ ., data = .)
+
+summary(Model_result3)
+
+# 75-99 as the base model
+Model_result4 <- regression_data %>%
+  subset(select = - is_75_99) %>%
+  lm(feelings_life ~ ., data = .)
+
+summary(Model_result4)
+
+# 100-124 as the base model
+Model_result5 <- regression_data %>%
+  subset(select = - is_100_124) %>%
+  lm(feelings_life ~ ., data = .)
+
+summary(Model_result5)
+
+# above 125 as the base model
+Model_result6 <- regression_data %>%
+  subset(select = - is_125) %>%
+  lm(feelings_life ~ ., data = .)
+
+summary(Model_result6)
 ```
 
-
-Here you will include all results. This includes descriptive statistics, graphs, figures, tables, and model results. Please ensure that everything is well formatted and in a report style. You must also provide an explanation of the results in this section. You can overflow to an Appendix if needed. 
-
-Please ensure that everything is well labelled. So if you have multiple histograms and plots, calling them Figure 1, 2, 3, etc. and referencing them as Figure 1, Figure 2, etc. in your report will be expected. The reader should not get lost in a sea of information. Make sure to have the results be clean, well formatted and digestible.
+For the marital statue, when setting is_single as base, the other levels except is_divorcedTRUE are significant. is_ownedTRUE is significant and is_religionTRUE are significant in each level. All the levels of income are significant when setting the below 25 as base level. But when looking into each of them, only the last level is_125TRUE will cause a large change. The bar plot also shows that the feelings life increase slowly and has flutuation in the first four level, only the last level has obvious change.
 
 ## Discussion
 
-Here you will discuss conclusions drawn from the results and comment on how it relates to the original goal of the study (which was specified in the Introduction).
+In conclusion, the marital statue, house owning or renting, religion and income are all significant factors that will affect the feelings of life. For marital statues, getting married and living together do have a more satisfied life than singles, while divorced and seperate has a less satified life than single. Interestingly, widowed seems more satified, and the divorced in not significant. For own_rent, people owning a house will be more satified than those without living place, while renting is unsignificance. For religion, having a belief will be more satisfied than those without belief. And for income, all the level showed its significance, the feeling of life seems to increase as the income level increase. However, when looking into each level precisely, we find out that each levle show significance compared to below 25 level, and the above 125 level show significance to each level below. However, for the middle four levels between the highest and lowest, the increase is not that significant, even it appears fluctuation. The plot also shows a similiar result, such that the lowest level is obvious low and the highest level is obvious high, while the middle of them increase slowly. 
 
 # Weaknesses
 
-Here we discuss weaknesses of the study, data, analysis, etc. You can also discuss areas for improvement.
+The linear model itself may be not precise enough. Though the study of life feeling and income is fine, but other factors are difficult to judge.
 
 # Next Steps
 
-Here you discuss subsequent work to be done after this report. This can include next steps in terms of statistical analysis (perhaps there is a more efficient algorithm available, or perhaps there is a caveat in the data that would allow for some new technique). Future steps should also be specified in terms of the study setting (eg. including a follow-up survey on something, or a subsequent study that would complement the conclusions of your report).
-
+For the next step, I may learn some interesting finding in this study, such as the is_widowedTRUE level in marital variable. Also, I would continue to study if there is a better statistic model for the data. 
 
 ## References
 
-
+[1] Wickham et al., (2019). Welcome to the tidyverse. Journal of Open Source Software, 4(43),
+  1686, https://doi.org/10.21105/joss.01686
+  
+[2]  Kirill Müller (2017). here: A Simpler Way to Find Your Files. R package version 0.1.
+  https://CRAN.R-project.org/package=here
+  
+[3] gss csv
 
